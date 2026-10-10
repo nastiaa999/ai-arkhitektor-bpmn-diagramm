@@ -1,0 +1,194 @@
+{
+ "process": {
+  "name": "Обработка заказа интернет-магазина",
+  "goal": "Заказ доставлен клиенту или отменён"
+ },
+ "participants": [
+  {
+   "id": "P1",
+   "name": "Клиент",
+   "kind": "role"
+  },
+  {
+   "id": "P2",
+   "name": "Менеджер",
+   "kind": "role"
+  },
+  {
+   "id": "P3",
+   "name": "Склад",
+   "kind": "department"
+  }
+ ],
+ "steps": [
+  {
+   "id": "S1",
+   "type": "start",
+   "name": "Клиенту нужен товар",
+   "participant": "P1",
+   "src": [
+    1
+   ],
+   "next": [
+    {
+     "to": "S2"
+    }
+   ]
+  },
+  {
+   "id": "S2",
+   "type": "user_task",
+   "name": "Оформить заказ на сайте",
+   "participant": "P1",
+   "src": [
+    1
+   ],
+   "next": [
+    {
+     "to": "S3"
+    }
+   ]
+  },
+  {
+   "id": "S3",
+   "type": "task",
+   "name": "Проверить наличие товара",
+   "participant": "P2",
+   "src": [
+    2
+   ],
+   "next": [
+    {
+     "to": "G1"
+    }
+   ]
+  },
+  {
+   "id": "G1",
+   "type": "xor",
+   "name": "Товар в наличии?",
+   "participant": "P2",
+   "src": [
+    3,
+    4
+   ],
+   "next": [
+    {
+     "to": "S4",
+     "label": "Нет"
+    },
+    {
+     "to": "G2",
+     "label": "Да"
+    }
+   ]
+  },
+  {
+   "id": "S4",
+   "type": "send_task",
+   "name": "Сообщить клиенту об отмене",
+   "participant": "P2",
+   "src": [
+    3
+   ],
+   "next": [
+    {
+     "to": "E1"
+    }
+   ]
+  },
+  {
+   "id": "E1",
+   "type": "end",
+   "name": "Заказ отменён",
+   "participant": "P2",
+   "src": [
+    3
+   ],
+   "next": []
+  },
+  {
+   "id": "G2",
+   "type": "and",
+   "name": "Параллельная обработка",
+   "participant": "P2",
+   "src": [
+    4
+   ],
+   "next": [
+    {
+     "to": "S5"
+    },
+    {
+     "to": "S6"
+    }
+   ]
+  },
+  {
+   "id": "S5",
+   "type": "task",
+   "name": "Выставить счёт клиенту",
+   "participant": "P2",
+   "src": [
+    4
+   ],
+   "next": [
+    {
+     "to": "S7"
+    }
+   ]
+  },
+  {
+   "id": "S6",
+   "type": "task",
+   "name": "Собрать заказ",
+   "participant": "P3",
+   "src": [
+    4
+   ],
+   "next": [
+    {
+     "to": "S7"
+    }
+   ]
+  },
+  {
+   "id": "S7",
+   "type": "task",
+   "name": "Отправить заказ клиенту",
+   "participant": "P3",
+   "src": [
+    5
+   ],
+   "next": [
+    {
+     "to": "S8"
+    }
+   ]
+  },
+  {
+   "id": "S8",
+   "type": "task",
+   "name": "Получить заказ",
+   "participant": "P1",
+   "src": [
+    6
+   ],
+   "next": [
+    {
+     "to": "E2"
+    }
+   ]
+  },
+  {
+   "id": "E2",
+   "type": "end",
+   "name": "Заказ получен",
+   "participant": "P1",
+   "src": [
+    6
+   ],
+   "next": []
+  }
+ ]
+}

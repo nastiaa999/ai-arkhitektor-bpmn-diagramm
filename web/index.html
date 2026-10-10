@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BPMN-архитектор</title>
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.11.1/dist/assets/diagram-js.css">
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.11.1/dist/assets/bpmn-js.css">
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.11.1/dist/assets/bpmn-font/css/bpmn.css">
+<script src="https://unpkg.com/bpmn-js@17.11.1/dist/bpmn-modeler.development.js"></script>
+<style>
+  :root{--navy:#0a1f52;--navy-2:#102a6b;--navy-3:#1d3d8a;--orange:#f26a21;--orange-2:#ff8a3d;--ink:#e8edf9;--muted:#9fb0d6;--bg:#eef2fa}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font:14px/1.45 "Segoe UI",system-ui,sans-serif;color:#10224f;background:var(--bg);display:grid;grid-template-rows:56px 1fr}
+
+  header{display:flex;align-items:center;gap:14px;padding:0 20px;background:linear-gradient(90deg,var(--navy),var(--navy-2));color:#fff;border-bottom:3px solid var(--orange)}
+  .logo{width:34px;height:34px;border-radius:9px;background:var(--orange);display:grid;place-items:center;font-weight:800;font-size:18px}
+  header h1{margin:0;font-size:17px;letter-spacing:.2px}
+  header small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+  .sp{flex:1}
+  #chips{display:flex;gap:6px}
+  .chip{padding:3px 10px;border-radius:99px;font-size:12px;background:rgba(255,255,255,.12);color:#fff}
+  .chip.ok{background:rgba(60,200,120,.25)}.chip.bad{background:rgba(255,80,60,.35)}
+  button{font:inherit;cursor:pointer}
+  .help-btn{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:6px 12px}
+  .help-btn:hover{background:rgba(255,255,255,.12)}
+
+  main{display:grid;grid-template-columns:400px 1fr;min-height:0}
+  #left{background:var(--navy);color:var(--ink);padding:16px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--navy-2);border-radius:12px;padding:14px}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  label,summary{font-weight:600}
+  .link{background:none;border:0;color:var(--orange-2);padding:0}
+  .link:hover{text-decoration:underline}
+  textarea{width:100%;height:170px;resize:vertical;border:1px solid var(--navy-3);border-radius:8px;background:#0b1a44;color:#fff;padding:10px;font:inherit;outline:none}
+  textarea:focus,.ask input:focus{border-color:var(--orange)}
+  .tip{color:var(--muted);font-size:12px;margin:6px 0 10px}
+  .primary{width:100%;padding:11px;border:0;border-radius:9px;background:linear-gradient(90deg,var(--orange),var(--orange-2));color:#fff;font-weight:700;display:flex;justify-content:center;gap:8px;align-items:center}
+  .primary:hover{filter:brightness(1.08)}.primary:disabled{opacity:.7;cursor:wait}
+  .spin{display:none;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:r .7s linear infinite}
+  .busy .spin{display:inline-block}
+  @keyframes r{to{transform:rotate(360deg)}}
+  #status{margin-top:8px;color:#ffb48a;font-size:13px}
+
+  .ask{background:#fff4ec;color:#10224f;border-left:5px solid var(--orange);animation:pop .4s ease}
+  @keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+  .ask h3{margin:0 0 6px;font-size:14px;color:var(--orange)}
+  .clarif{padding:8px 0;border-top:1px solid #f3d6c4}
+  .clarif:first-of-type{border-top:0}
+  .clarif.done{opacity:.45}
+  .clarif .q{margin-bottom:6px}
+  .ask input{width:100%;padding:8px 10px;border:1px solid #e3c2ad;border-radius:8px;font:inherit;outline:none;margin-bottom:6px}
+  .ask .btns{display:flex;gap:8px}
+  .btn-o{background:var(--orange);color:#fff;border:0;border-radius:8px;padding:7px 14px;font-weight:600}
+  .btn-g{background:transparent;color:#6b5a50;border:1px solid #e3c2ad;border-radius:8px;padding:7px 12px}
+
+  details.card summary{cursor:pointer}
+  #sents{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+  .sent{padding:5px 8px;border-radius:6px;border-left:3px solid transparent;font-size:13px}
+  .sent.gap{background:rgba(255,90,60,.22);border-left-color:#ff5a3c}
+  .sent.on{background:rgba(242,106,33,.4);border-left-color:var(--orange)}
+
+  #right{display:grid;grid-template-rows:1fr 200px;min-height:0;min-width:0}
+  #canvasWrap{position:relative;background:#fff;min-height:0}
+  #canvas{position:absolute;inset:0}
+  #empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:2;background:#fff}
+  #empty div{text-align:center;color:var(--navy-3)}
+  #empty .steps{display:flex;gap:18px;margin-top:16px;justify-content:center}
+  #empty .st{width:150px;padding:14px 10px;border-radius:12px;background:var(--bg)}
+  #empty .n{width:26px;height:26px;margin:0 auto 6px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:700}
+  #empty b{font-size:18px;color:var(--navy)}
+
+  #bottom{background:#fff;border-top:1px solid #d5ddf0;display:flex;flex-direction:column;min-height:0}
+  .bhead{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid #eef1f8}
+  .badge{background:var(--orange);color:#fff;border-radius:99px;padding:0 8px;font-size:12px}
+  .badge:empty{display:none}
+  .ghost{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:6px 12px}
+  .ghost:disabled{opacity:.35;cursor:default}
+  #issues{overflow:auto;padding:4px 16px 10px}
+  .issue{display:flex;gap:10px;align-items:flex-start;padding:7px 6px;border-radius:8px;cursor:pointer}
+  .issue:hover{background:#f3f6fd}
+  .tag{flex:none;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;color:#fff;margin-top:1px}
+  .tag.error{background:#d93025}.tag.warning{background:var(--orange)}.tag.info{background:#6b7fb3}
+  .none{color:#7a89b0;padding:10px 6px}
+
+  .hl .djs-visual>:nth-child(1){stroke:#e53935!important;stroke-width:3px!important}
+  .autofix .djs-visual>:nth-child(1){stroke-dasharray:6 3!important}
+  .gapnode .djs-visual>:nth-child(1){stroke:#e65100!important;stroke-width:3px!important}
+
+  dialog{border:0;border-radius:16px;padding:0;max-width:460px;width:92%;box-shadow:0 20px 60px rgba(10,31,82,.4)}
+  dialog::backdrop{background:rgba(10,31,82,.6)}
+  .dh{background:var(--navy);color:#fff;padding:16px 20px;border-bottom:3px solid var(--orange);font-weight:700;font-size:16px}
+  .db{padding:16px 20px}
+  .db ol{margin:0 0 12px;padding-left:20px}.db li{margin-bottom:8px}
+  .db p{margin:0;color:#4a5b8c;font-size:13px}
+  .df{padding:0 20px 18px;text-align:right}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">B</div>
+  <h1>BPMN-архитектор<small>Опишите процесс словами — получите схему</small></h1>
+  <div class="sp"></div>
+  <div id="chips"></div>
+  <button class="help-btn" id="helpBtn">? Как пользоваться</button>
+</header>
+
+<main>
+  <aside id="left">
+    <section class="card">
+      <div class="row"><label for="text">Описание процесса</label><button class="link" id="example">Вставить пример</button></div>
+      <textarea id="text" placeholder="Кто и что делает, по шагам. Например: «Сотрудник подаёт заявку. Руководитель проверяет её…»"></textarea>
+      <div class="tip">5–10 шагов, одно действие в предложении · Ctrl+Enter — построить</div>
+      <button id="go" class="primary"><span class="spin"></span><span id="golabel">Построить схему</span></button>
+      <div id="status"></div>
+    </section>
+
+    <section id="clarifs" class="card ask" hidden></section>
+
+    <details class="card" id="sentsBox" open>
+      <summary>Текст по предложениям</summary>
+      <div id="sents"></div>
+    </details>
+  </aside>
+
+  <section id="right">
+    <div id="canvasWrap">
+      <div id="canvas"></div>
+      <div id="empty"><div>
+        <b>Схема появится здесь</b>
+        <div class="steps">
+          <div class="st"><div class="n">1</div>Опишите процесс слева</div>
+          <div class="st"><div class="n">2</div>Нажмите «Построить»</div>
+          <div class="st"><div class="n">3</div>Ответьте на уточнения</div>
+        </div>
+      </div></div>
+    </div>
+    <div id="bottom">
+      <div class="bhead">
+        <b>Замечания по логике</b><span id="icount" class="badge"></span>
+        <span class="sp"></span>
+        <button id="dl" class="ghost" disabled>⬇ Скачать .bpmn</button>
+      </div>
+      <div id="issues"><div class="none">Здесь появятся замечания к логике процесса</div></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="help">
+  <div class="dh">Как пользоваться</div>
+  <div class="db">
+    <ol>
+      <li><b>Опишите процесс</b>: кто, что делает и при каких условиях. По одному действию в предложении.</li>
+      <li><b>Нажмите «Построить схему»</b>: появятся дорожки участников, действия и ветвления.</li>
+      <li><b>Красные предложения и оранжевые фигуры</b> — обрыв логики. Ответьте на уточнение слева или поправьте текст и постройте заново.</li>
+      <li><b>Правьте схему мышью</b> и скачайте .bpmn: файл открывается в bpmn.io.</li>
+    </ol>
+    <p>Клик по замечанию или фигуре подсвечивает связанные предложения.</p>
+  </div>
+  <div class="df"><button class="btn-o" id="helpClose">Понятно</button></div>
+</dialog>
+
+<script>
+const modeler = new BpmnJS({container: '#canvas'});
+const $ = id => document.getElementById(id);
+const EXAMPLE = 'Сотрудник подаёт заявление на отпуск своему руководителю. Руководитель проверяет, не пересекается ли отпуск с графиком работы отдела. Если пересечения нет, руководитель подписывает заявление и передаёт его в отдел кадров. Если пересечение есть, руководитель возвращает заявление сотруднику с просьбой выбрать другие даты, и сотрудник подаёт новое заявление. Специалист отдела кадров оформляет приказ об отпуске и уведомляет сотрудника.';
+const skipped = new Set();
+let last = null, marked = [];
+
+function clearMarks() {
+  const c = modeler.get('canvas');
+  marked.forEach(([id, cls]) => { try { c.removeMarker(id, cls); } catch (e) {} });
+  marked = [];
+  document.querySelectorAll('.sent.on').forEach(e => e.classList.remove('on'));
+}
+function mark(id, cls) { modeler.get('canvas').addMarker(id, cls); marked.push([id, cls]); }
+function lightSrc(nums) {
+  (nums || []).forEach(n => { const e = $('s' + n); if (e) e.classList.add('on'); });
+}
+function stepToEl(sid) {
+  return Object.keys(last.element_map).filter(k => last.element_map[k] === sid && !k.startsWith('Flow_'));
+}
+function chip(text, cls, title) {
+  const c = document.createElement('span');
+  c.className = 'chip ' + (cls || ''); c.textContent = text; if (title) c.title = title;
+  $('chips').appendChild(c);
+}
+
+function highlightGaps() {
+  last.issues.filter(i => i.code === 'L06' || i.code === 'L09').forEach(i => {
+    (i.src || []).forEach(n => { const e = $('s' + n); if (e) e.classList.add('gap'); });
+    (i.step_ids || []).forEach(sid => stepToEl(sid).forEach(id => modeler.get('canvas').addMarker(id, 'gapnode')));
+  });
+}
+
+function renderClarifs() {
+  const box = $('clarifs');
+  box.innerHTML = '';
+  const list = last.clarifications || [];
+  box.hidden = !list.length;
+  if (!list.length) return;
+  const h = document.createElement('h3');
+  h.textContent = 'Нужно уточнение';
+  box.appendChild(h);
+  list.forEach(c => {
+    const step = c.step || c.step_name || '';
+    const question = c.question || c.text || c.message || '';
+    const row = document.createElement('div');
+    row.className = 'clarif' + (skipped.has(question) ? ' done' : '');
+    const q = document.createElement('div');
+    q.className = 'q'; q.textContent = question;
+    const inp = document.createElement('input');
+    inp.placeholder = 'Ваш ответ…';
+    const btns = document.createElement('div');
+    btns.className = 'btns';
+    const ok = document.createElement('button');
+    ok.className = 'btn-o'; ok.textContent = 'Ответить';
+    const skip = document.createElement('button');
+    skip.className = 'btn-g'; skip.textContent = 'Оставить как есть';
+    const send = () => {
+      const v = inp.value.trim();
+      if (!v) { inp.focus(); return; }
+      $('text').value += '\n\n[Уточнение к шагу «' + step + '»]: ' + v;
+      build();
+    };
+    ok.onclick = send;
+    inp.onkeydown = e => { if (e.key === 'Enter') send(); };
+    skip.onclick = () => {
+      skipped.add(question);
+      row.classList.add('done');
+      inp.disabled = ok.disabled = skip.disabled = true;
+    };
+    if (row.classList.contains('done')) inp.disabled = ok.disabled = skip.disabled = true;
+    btns.append(ok, skip);
+    row.append(q, inp, btns);
+    box.appendChild(row);
+  });
+  box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+
+function render() {
+  $('sents').innerHTML = '';
+  last.sentences.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'sent'; d.id = 's' + s.n; d.textContent = `[${s.n}] ${s.text}`;
+    $('sents').appendChild(d);
+  });
+
+  $('chips').innerHTML = '';
+  const x = last.validation.xsd, m = last.metrics;
+  chip(x.valid ? 'XSD ✓' : x.valid === null ? 'XSD не проверена' : 'XSD ✗', x.valid ? 'ok' : x.valid === null ? '' : 'bad',
+       x.valid === false ? x.errors.map(e => e.message).join('; ') : '');
+  chip('Наложений: ' + m.overlaps, m.overlaps ? 'bad' : 'ok');
+  chip('Пересечений: ' + m.crossings, '');
+
+  const box = $('issues');
+  box.innerHTML = '';
+  const names = {error: 'Ошибка', warning: 'Внимание', info: 'Инфо'};
+  const important = last.issues.filter(i => i.severity !== 'info').length;
+  $('icount').textContent = important || '';
+  if (!last.issues.length) box.innerHTML = '<div class="none">Замечаний нет ✓</div>';
+  last.issues.forEach(i => {
+    const d = document.createElement('div');
+    d.className = 'issue';
+    const t = document.createElement('span');
+    t.className = 'tag ' + i.severity; t.textContent = names[i.severity] || i.severity;
+    const msg = document.createElement('span');
+    msg.textContent = i.message;
+    d.append(t, msg);
+    d.onclick = () => {
+      clearMarks();
+      (i.step_ids || []).forEach(sid => stepToEl(sid).forEach(id => mark(id, 'hl')));
+      lightSrc(i.src);
+    };
+    box.appendChild(d);
+  });
+
+  last.ir.steps.filter(s => s.origin === 'autofix').forEach(s => stepToEl(s.id).forEach(id => mark(id, 'autofix')));
+  highlightGaps();
+  renderClarifs();
+}
+
+modeler.get('eventBus').on('element.click', e => {
+  if (!last) return;
+  const sid = last.element_map[e.element.id];
+  const step = last.ir.steps.find(s => s.id === sid);
+  document.querySelectorAll('.sent.on').forEach(x => x.classList.remove('on'));
+  if (step) lightSrc(step.src);
+});
+
+async function build() {
+  const btn = $('go');
+  btn.disabled = true; btn.classList.add('busy'); $('golabel').textContent = 'Строю…'; $('status').textContent = '';
+  try {
+    const r = await fetch('/api/generate', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text: $('text').value})});
+    const data = await r.json();
+    if (!r.ok) { $('status').textContent = 'Ошибка: ' + data.detail; return; }
+    last = data; marked = [];
+    await modeler.importXML(last.bpmn_xml);
+    $('empty').style.display = 'none';
+    modeler.get('canvas').zoom('fit-viewport');
+    render();
+    $('dl').disabled = false;
+  } catch (e) {
+    $('status').textContent = 'Ошибка: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.classList.remove('busy'); $('golabel').textContent = 'Построить схему';
+  }
+}
+
+$('go').onclick = build;
+$('text').onkeydown = e => { if (e.ctrlKey && e.key === 'Enter') build(); };
+$('example').onclick = () => { $('text').value = EXAMPLE; $('text').focus(); };
+$('helpBtn').onclick = () => $('help').showModal();
+$('helpClose').onclick = () => $('help').close();
+
+$('dl').onclick = async () => {
+  const {xml} = await modeler.saveXML({format: true});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([xml], {type: 'application/xml'}));
+  a.download = 'diagram.bpmn'; a.click();
+};
+</script>
+</body>
+</html>

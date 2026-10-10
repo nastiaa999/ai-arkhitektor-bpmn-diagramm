@@ -1,0 +1,23 @@
+{
+  "process": {"name": "Проверка заказа", "goal": "Заказ подтверждён"},
+  "participants": [
+    {"id": "P1", "name": "Менеджер", "kind": "role"},
+    {"id": "P2", "name": "Клиент", "kind": "role"}
+  ],
+  "steps": [
+    {"id": "S0", "type": "start", "name": "Заказ получен", "participant": "P1", "src": [1],
+     "next": [{"to": "S1"}]},
+    {"id": "S1", "type": "task", "name": "Проверить заказ", "participant": "P1", "src": [1],
+     "next": [{"to": "G1"}]},
+    {"id": "G1", "type": "xor", "name": "Данные полные?", "participant": "P1", "src": [2],
+     "next": [{"to": "S4", "label": "Да"}, {"to": "S2", "label": "Нет"}]},
+    {"id": "S2", "type": "send_task", "name": "Вернуть заказ клиенту", "participant": "P1", "src": [2],
+     "next": [{"to": "S3"}]},
+    {"id": "S3", "type": "task", "name": "Прислать заказ повторно", "participant": "P2", "src": [2],
+     "next": [{"to": "S1"}]},
+    {"id": "S4", "type": "task", "name": "Подтвердить заказ", "participant": "P1", "src": [3],
+     "next": [{"to": "E1"}]},
+    {"id": "E1", "type": "end", "name": "Заказ подтверждён", "participant": "P1", "src": [3],
+     "next": []}
+  ]
+}

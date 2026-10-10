@@ -1,0 +1,38 @@
+# Профили моделей. Смена модели = LLM_PROFILE в .env или --model в CLI.
+# ${VAR} / ${VAR:-по_умолчанию} подставляются из окружения (.env).
+default: gigachat
+
+models:
+  gigachat:
+    provider: gigachat
+    credentials: ${GIGACHAT_CREDENTIALS:-}
+    scope: ${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}
+    model: ${GIGACHAT_MODEL:-GigaChat-2}
+    auth_url: ${GIGACHAT_AUTH_URL:-https://ngw.devices.sberbank.ru:9443/api/v2/oauth}
+    base_url: ${GIGACHAT_BASE_URL:-https://gigachat.devices.sberbank.ru/api/v1}
+    ca_bundle: ${GIGACHAT_CA_BUNDLE:-}
+    verify_ssl: ${GIGACHAT_VERIFY_SSL:-true}
+    structured: none          # GigaChat: только промпт + json_repair
+
+  # универсальный профиль: всё берётся из LLM_BASE_URL / LLM_MODEL / LLM_API_KEY
+  openai_compat:
+    provider: openai
+    base_url: ${LLM_BASE_URL:-}
+    model: ${LLM_MODEL:-}
+    api_key: ${LLM_API_KEY:-}
+    structured: json_object   # json_schema | json_object | none
+
+  gpt-oss-120b:
+    provider: openai
+    base_url: ${OSS_BASE_URL:-}
+    model: openai/gpt-oss-120b
+    api_key: ${LLM_API_KEY:-}
+    structured: json_schema
+    extra: {reasoning_effort: medium}
+
+  yandexgpt:
+    provider: openai
+    base_url: https://llm.api.cloud.yandex.net/v1   # сверить с документацией AI Studio
+    model: gpt://${YC_FOLDER:-}/yandexgpt/latest
+    api_key: ${YC_API_KEY:-}
+    structured: json_object
